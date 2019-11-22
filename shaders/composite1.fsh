@@ -55,21 +55,80 @@ vec3 mixWater(vec3 color, vec4 watercolor)
     return mix(color, watercolor.rgb, pow(watercolor.a, 0.7));
 }
 
+// 按深度描边（遍历）
+vec3 edgelineZTestFor(vec3 color)
+{
+    float dx = 1.0 / viewWidth;
+    float dy = 1.0 / viewHeight;
+    float depth0 = linearizeDepth(texture2D(depthtex1, pos.xy).z);
+    // float maxx = 0.0;
+    // float maxy = 0.0;
+    float maxz = 0.0;
+    for (float i = -1.0; i < 1.1; i += 1.0)
+        for (float j = -1.0; j < 1.1; j += 1.0)
+        {
+            float depth = linearizeDepth(texture2D(depthtex1, vec2(clamp(pos.x - dx * i, 0.0, 1.0), clamp(pos.y - dy * j, 0.0, 1.0))).z);
+            float sub;
+            if ((sub = abs(depth - depth0) / depth0) > maxz)
+            {
+                // maxx = i * dx;
+                // maxy = j * dy;
+                maxz = sub;
+            }
+        }
+    // return vec3(maxz);
+    if (maxz < 0.05)
+        return color;
+    else
+        return vec3(0);
+}
+
+// 按深度描边（遍历）
+vec3 edgelineZTestForWater(vec3 color)
+{
+    float dx = 1.0 / viewWidth;
+    float dy = 1.0 / viewHeight;
+    float depth0 = linearizeDepth(texture2D(depthtex0, pos.xy).z);
+    // float maxx = 0.0;
+    // float maxy = 0.0;
+    float maxz = 0.0;
+    for (float i = -1.0; i < 1.1; i += 1.0)
+        for (float j = -1.0; j < 1.1; j += 1.0)
+        {
+            float depth = linearizeDepth(texture2D(depthtex0, vec2(clamp(pos.x - dx * i, 0.0, 1.0), clamp(pos.y - dy * j, 0.0, 1.0))).z);
+            float sub;
+            if ((sub = abs(depth - depth0)) > maxz)
+            {
+                // maxx = i * dx;
+                // maxy = j * dy;
+                maxz = sub;
+            }
+        }
+    // return vec3(sqrt(maxx * maxx + maxy * maxy) - 0.002 * maxz);
+    // if (sqrt(maxx * maxx + maxy * maxy) * 6.0 >= maxz)
+    if (maxz < 0.05)
+        return color;
+    else
+        return vec3(0);
+}
+
 // 按深度描边
 vec3 edgelineZTest(vec3 color)
 {
     float dx = 1.0 / viewWidth;
     float dy = 1.0 / viewHeight;
     float depth0 = linearizeDepth(texture2D(depthtex1, pos.xy).z);
-    // float size = max(10.0 * (0.01 - depth0) / 0.01, 0.5);
-    float size = max(3.0 * pow(1.8 * (far - near), -0.5 * depth0), 1.0);
-    // float size = 1.0;
+    // float size = max(5.0 * (0.01 - depth0) / 0.01, 1.0);
+    // float size = max(3.0 * pow(1.8 * (far - near), -0.5 * depth0), 1.0);
+    float size = 1.0;
     float depth1 = linearizeDepth(texture2D(depthtex1, vec2(clamp(pos.x - dx * size, 0.0, 1.0), clamp(pos.y - dy * size, 0.0, 1.0))).z);
     float depth2 = linearizeDepth(texture2D(depthtex1, vec2(clamp(pos.x - dx * size, 0.0, 1.0), clamp(pos.y + dy * size, 0.0, 1.0))).z);
     float depth3 = linearizeDepth(texture2D(depthtex1, vec2(clamp(pos.x + dx * size, 0.0, 1.0), clamp(pos.y - dy * size, 0.0, 1.0))).z);
     float depth4 = linearizeDepth(texture2D(depthtex1, vec2(clamp(pos.x + dx * size, 0.0, 1.0), clamp(pos.y + dy * size, 0.0, 1.0))).z);
-    float maxdepth = max(max(abs(depth0-depth1), abs(depth0-depth2)), max(abs(depth0-depth3), abs(depth0-depth4)));
-    if (maxdepth > min(pow(depth0, 1.4), 0.039))
+    float maxdepth = max(max(abs(depth0-depth1)/depth0, abs(depth0-depth2)/depth0), max(abs(depth0-depth3)/depth0, abs(depth0-depth4)/depth0));
+    // if (maxdepth > min(pow(depth0, 1.4), 0.039))
+    // if (maxdepth > 0.001)
+    if (maxdepth > 0.05)
         return vec3(0);
     else
         return color;
@@ -89,8 +148,9 @@ vec3 edgelineZTestWater(vec3 color)
     float depth2 = linearizeDepth(texture2D(depthtex0, vec2(clamp(pos.x - dx * size, 0.0, 1.0), clamp(pos.y + dy * size, 0.0, 1.0))).z);
     float depth3 = linearizeDepth(texture2D(depthtex0, vec2(clamp(pos.x + dx * size, 0.0, 1.0), clamp(pos.y - dy * size, 0.0, 1.0))).z);
     float depth4 = linearizeDepth(texture2D(depthtex0, vec2(clamp(pos.x + dx * size, 0.0, 1.0), clamp(pos.y + dy * size, 0.0, 1.0))).z);
-    float maxdepth = max(max(abs(depth0-depth1), abs(depth0-depth2)), max(abs(depth0-depth3), abs(depth0-depth4)));
-    if (maxdepth > min(pow(depth0, 1.4), 0.039))
+    float maxdepth = max(max(abs(depth0-depth1)/depth0, abs(depth0-depth2)/depth0), max(abs(depth0-depth3)/depth0, abs(depth0-depth4)/depth0));
+    // if (maxdepth > min(pow(depth0, 1.4), 0.039))
+    if (maxdepth > 0.05)
         return vec3(0);
     else
         return color;
@@ -181,7 +241,7 @@ void main()
     // gl_FragData[0] = vec4(vec3(linearizeDepth(texture2D(depthtex1, pos.xy).z)), 1.0);
     // gl_FragData[0] = texture2D(colortex2, pos.xy);
     gl_FragData[0] = color;
-    // gl_FragData[0] = vec4(vec3(texture2D(gnormal, pos.xy).xyz * 0.5 + 0.5), 1.0);
+    // gl_FragData[0] = vec4(vec3(texture2D(colortex1, pos.xy).xyz * 0.5 + 0.5), 1.0);
     // vec3 n = normalize((gbufferModelViewInverse * texture2D(colortex1, pos.xy)).xyz);
     // gl_FragData[0] = vec4(n * 0.5 + 0.5, 1.0);
 }

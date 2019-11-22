@@ -35,7 +35,7 @@ uniform sampler2D shadowtex1;
 uniform vec3 shadowLightPosition;
 uniform float rainStrength;
 
-#define SHADOW_MAP_BIAS 0.95
+#define SHADOW_MAP_BIAS 0.9
 
 vec3 suncolor = vec3(1.0);
 vec3 mooncolor = vec3(0.2, 0.2, 0.35);
@@ -53,22 +53,25 @@ vec3 sunlightSolid(vec3 light)
     vec4 viewPosition = gbufferProjectionInverse * vec4(pos.s * 2.0 - 1.0, pos.t * 2.0 - 1.0, 2.0 * depth - 1.0, 1.0f);
     viewPosition /= viewPosition.w;
     vec4 camPosition = gbufferModelViewInverse * viewPosition;
-    camPosition /= camPosition.w;
+    // camPosition /= camPosition.w;
     if (isHand < 1.0)
-        camPosition = camPosition + vec4(0.3 * normalize((gbufferModelViewInverse * vec4(normal, 1.0)).xyz), 0.0);
-    vec4 shadowPosition = shadowProjection * shadowModelView * camPosition;
+        camPosition = camPosition + vec4(depth * 0.06 * normalize((gbufferModelViewInverse * vec4(normal, 1.0)).xyz), 0.0);
+    vec4 shadowPosition0 = shadowProjection * shadowModelView * camPosition;
+    vec4 shadowPosition = shadowPosition0;
     float distb = length(shadowPosition.xy);
     float distortFactor = (1.0 - SHADOW_MAP_BIAS) + distb * SHADOW_MAP_BIAS;
     shadowPosition.xy /= distortFactor;
     shadowPosition /= shadowPosition.w;
+    shadowPosition0 = shadowPosition0 * 0.5 + 0.5;
     shadowPosition = shadowPosition * 0.5 + 0.5;
     float shadowDepth = texture2D(shadowtex1, shadowPosition.xy).z;
     if (isHand > 0.0)
         shadowDepth += 0.0018;
     vec3 sunlight = vec3(0.0);
+    vec3 suncolor = mix(mooncolor, suncolor, n) * n2;
     if (shadowDepth >= shadowPosition.z)
     {
-        sunlight = mix(mooncolor, suncolor, n) * n2;
+        sunlight = suncolor;
         float waterDepth = texture2D(shadowtex0, shadowPosition.xy).z;
         if (isHand > 0.0)
             waterDepth += 0.0018;
@@ -98,12 +101,14 @@ vec3 sunlightWater(vec3 light)
     viewPosition /= viewPosition.w;
     vec4 camPosition = gbufferModelViewInverse * viewPosition;
     if (isHand < 1.0)
-        camPosition = camPosition + vec4(0.3 * normalize((gbufferModelViewInverse * vec4(normal, 1.0)).xyz), 0.0);
-    vec4 shadowPosition = shadowProjection * shadowModelView * camPosition;
+        camPosition = camPosition + vec4(depth * 0.06 * normalize((gbufferModelViewInverse * vec4(normal, 1.0)).xyz), 0.0);
+    vec4 shadowPosition0 = shadowProjection * shadowModelView * camPosition;
+    vec4 shadowPosition = shadowPosition0;
     float distb = length(shadowPosition.xy);
     float distortFactor = (1.0 - SHADOW_MAP_BIAS) + distb * SHADOW_MAP_BIAS;
     shadowPosition.xy /= distortFactor;
     shadowPosition /= shadowPosition.w;
+    shadowPosition0 = shadowPosition0 * 0.5 + 0.5;
     shadowPosition = shadowPosition * 0.5 + 0.5;
     float shadowDepth = texture2D(shadowtex0, shadowPosition.xy).z;
     if (isHand > 0.0)
@@ -135,10 +140,12 @@ void main()
     {
         vec4 waterlight = texture2D(colortex4, pos.xy);
         waterlight.rgb = sunlightWater(waterlight.rgb);
+        // gl_FragData[3] = waterlight;
         gl_FragData[4] = waterlight;
     }
     else
     {
+        // gl_FragData[3] = texture2D(colortex3, pos.xy);
         gl_FragData[4] = texture2D(colortex4, pos.xy);
     }
 }
