@@ -29,7 +29,7 @@ void main()
     else
         lights.y = max(lm2n(lmpos.y) - (0.8 - 0.1 * sunHeight()) - rainStrength * 0.05, 0.0);
 
-    float dark = lm2n(lmpos.y) < 0.5 - 0.3 * sunHeight() + rainStrength * 0.2 ? 1.0 : 0.0;
+    float dark = lm2n(lmpos.y) < 0.7 - 0.2 * sunHeight() + rainStrength * (0.05 + sunHeight() * 0.095 + 0.095) ? 1.0 : 0.0;
 
     // 天空 0.5 0.1 0.05
     if (lights.y > 0.5)

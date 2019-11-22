@@ -34,6 +34,7 @@ uniform sampler2D shadowtex1;
 
 uniform vec3 shadowLightPosition;
 uniform float rainStrength;
+uniform int IsEyeInWater;
 
 #define SHADOW_MAP_BIAS 0.9
 
@@ -78,7 +79,8 @@ vec3 sunlightSolid(vec3 light)
         if (waterDepth < shadowPosition.z)
         {
             vec4 shadowcolor = texture2D(shadowcolor0, shadowPosition.xy);
-            sunlight = mix(shadowcolor.rgb, light, shadowcolor.a * (shadowPosition.z - waterDepth) * 30.0);
+            sunlight = mix(sunlight, shadowcolor.rgb * sunlight, shadowcolor.a);// * (shadowPosition.z - waterDepth) * 30.0);
+            sunlight = mix(sunlight, light, (shadowPosition.z - waterDepth) * (12.0 - sunHeight() * 6.0));
         }
     }
     sunlight = mix(light, sunlight, maxlight);

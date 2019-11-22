@@ -142,8 +142,8 @@ vec3 edgelineZTestWater(vec3 color)
     float dy = 1.0 / viewHeight;
     float depth0 = linearizeDepth(texture2D(depthtex0, pos.xy).z);
     // float size = max(10.0 * (0.01 - depth0) / 0.01, 0.5);
-    float size = max(3.0 * pow(1.8 * (far - near), -0.5 * depth0), 1.0);
-    // float size = 1.0;
+    // float size = max(3.0 * pow(1.8 * (far - near), -0.5 * depth0), 1.0);
+    float size = 1.0;
     float depth1 = linearizeDepth(texture2D(depthtex0, vec2(clamp(pos.x - dx * size, 0.0, 1.0), clamp(pos.y - dy * size, 0.0, 1.0))).z);
     float depth2 = linearizeDepth(texture2D(depthtex0, vec2(clamp(pos.x - dx * size, 0.0, 1.0), clamp(pos.y + dy * size, 0.0, 1.0))).z);
     float depth3 = linearizeDepth(texture2D(depthtex0, vec2(clamp(pos.x + dx * size, 0.0, 1.0), clamp(pos.y - dy * size, 0.0, 1.0))).z);
