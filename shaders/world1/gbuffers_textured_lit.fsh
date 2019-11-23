@@ -17,11 +17,14 @@ in vec4 texpos;
 in vec4 lmpos;
 in vec4 normal;
 
+#define LUMPLIGHT_E
+
 void main()
 {
     float light;
     light = pow(lm2n(lmpos.x), 1.4);
 
+#ifdef LUMPLIGHT_E
     // 方块 0.6 0.3 0.1 
     if (light > 0.6)
         light = 1.0;
@@ -31,6 +34,7 @@ void main()
         light = 0.3;
     else
         light = 0;
+#endif
 
     vec4 lightcolor = texture2D(lightmap, vec2(light, n2lm(0)));
 
@@ -39,9 +43,9 @@ void main()
     gl_FragData[2] = lightcolor;
     gl_FragData[3] = normal;
 
-    if(fogMode == 9729)
-        gl_FragData[0].rgb = mix(gl_Fog.color.rgb, gl_FragData[0].rgb, clamp((gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start), 0.0, 1.0));
-    else if(fogMode == 2048)
-        gl_FragData[0].rgb = mix(gl_Fog.color.rgb, gl_FragData[0].rgb, clamp(exp(-gl_FogFragCoord * gl_Fog.density), 0.0, 1.0));
+    // if(fogMode == 9729)
+    //     gl_FragData[0].rgb = mix(gl_Fog.color.rgb, gl_FragData[0].rgb, clamp((gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start), 0.0, 1.0));
+    // else if(fogMode == 2048)
+    //     gl_FragData[0].rgb = mix(gl_Fog.color.rgb, gl_FragData[0].rgb, clamp(exp(-gl_FogFragCoord * gl_Fog.density), 0.0, 1.0));
 }
 /* DRAWBUFFERS:0125 */

@@ -18,6 +18,8 @@ in vec4 pos;
 vec3 dayColor = vec3(1.2, 1.0, 0.9);
 vec3 nightColor = vec3(0.7, 0.7, 1.0);
 
+#define AFTEREFFECT
+
 vec3 UnderWater(vec3 color)
 {
     vec3 hsvcolor = rgb2hsv(color);
@@ -56,10 +58,12 @@ vec3 aftereffect(vec3 color)
 void main()
 {
     vec4 color = texture2D(colortex0, pos.xy);
+#ifdef AFTEREFFECT
     if (isEyeInWater == 1)
         color.rgb = UnderWater(color.rgb);
     color.rgb = effectVisionColor(color.rgb);
     color.rgb = aftereffect(color.rgb);
+#endif
 
     gl_FragColor = color;
     // gl_FragColor = vec4(vec3(sunHeight() * 0.5 + 0.5), 1.0);

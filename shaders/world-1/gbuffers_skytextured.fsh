@@ -6,10 +6,17 @@ uniform sampler2D texture;
 in vec4 color;
 in vec4 texpos;
 
+#define REDONLY
+
 void main()
 {
-    gl_FragData[0] = texture2D(texture, texpos.xy) * color;
+#ifdef REDONLY
+    gl_FragData[0] = vec4(1.0, 0.0, 0.0, 1.0);
     gl_FragData[1] = vec4(1.0, 0.0, 0.0, 1.0);
+#else
+    gl_FragData[0] = texture2D(texture, texpos.xy) * color;
+    gl_FragData[1] = vec4(1.0);
+#endif
     if(fogMode == 9729)
         gl_FragData[0].rgb = mix(vec3(1.0, 0.0, 0.0), gl_FragData[0].rgb, clamp((gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start), 0.0, 1.0));
     else if(fogMode == 2048)

@@ -38,6 +38,9 @@ uniform int IsEyeInWater;
 
 #define SHADOW_MAP_BIAS 0.9
 
+#define LUMPLIGHT
+#define REALTIMESHADOW
+
 vec3 suncolor = vec3(1.0);
 vec3 mooncolor = vec3(0.2, 0.2, 0.35);
 
@@ -85,10 +88,15 @@ vec3 sunlightSolid(vec3 light)
     }
     sunlight = mix(light, sunlight, maxlight);
     sunlight = mix(sunlight, light, rainStrength);
+#ifdef LUMPLIGHT
     if (rgb2hsv(sunlight).p > rgb2hsv(light).p)
         return sunlight;
     else
         return light;
+#else
+    // return mix(sunlight, light, clamp(3.0*(rgb2hsv(light).p - rgb2hsv(sunlight).p), 0.0, 1.0));
+    return sunlight + light;
+#endif
 }
 
 vec3 sunlightWater(vec3 light)
@@ -122,16 +130,23 @@ vec3 sunlightWater(vec3 light)
     }
     sunlight = mix(light, sunlight, maxlight);
     sunlight = mix(sunlight, light, rainStrength);
+#ifdef LUMPLIGHT
     if (rgb2hsv(sunlight).p > rgb2hsv(light).p)
         return sunlight;
     else
         return light;
+#else
+    // return mix(sunlight, light, clamp(3.0*(rgb2hsv(light).p - rgb2hsv(sunlight).p), 0.0, 1.0));
+    return sunlight + light;
+#endif
 }
 
 void main()
 {
     vec4 solidlight = texture2D(colortex2, pos.xy);
+#ifdef REALTIMESHADOW
     solidlight.rgb = sunlightSolid(solidlight.rgb);
+#endif
 
     gl_FragData[0] = texture2D(colortex0, pos.xy);
     gl_FragData[1] = texture2D(colortex1, pos.xy);
@@ -141,7 +156,9 @@ void main()
     if (texture2D(colortex3, pos.xy).a > 0)
     {
         vec4 waterlight = texture2D(colortex4, pos.xy);
+#ifdef REALTIMESHADOW
         waterlight.rgb = sunlightWater(waterlight.rgb);
+#endif
         // gl_FragData[3] = waterlight;
         gl_FragData[4] = waterlight;
     }

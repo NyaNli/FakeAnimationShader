@@ -1,11 +1,9 @@
 #version 430 compatibility
 #include "common.inc"
 
-uniform sampler2D colortex0; // 基础色
-uniform sampler2D colortex1; // 法线
-uniform sampler2D colortex2; // 光照
-uniform sampler2D colortex3; // 半透明方块
-uniform sampler2D colortex4; // 半透明方块光照
+uniform sampler2D colortex0;
+
+uniform sampler2D depthtex0;
 
 uniform float nightVision;
 uniform float blindness;
@@ -17,6 +15,9 @@ in vec4 pos;
 
 // vec3 dayColor = vec3(1.2, 1.0, 0.9);
 // vec3 nightColor = vec3(0.7, 0.7, 1.0);
+
+#define AFTEREFFECT_N
+#define REDONLY
 
 vec3 UnderWater(vec3 color)
 {
@@ -47,9 +48,18 @@ vec3 aftereffect(vec3 color)
 {
     vec3 hsvcolor = rgb2hsv(color);
     hsvcolor.t *= 1.8;
-    hsvcolor.p = pow(hsvcolor.p * 2, 1.2) * 0.5;
+    hsvcolor.p = pow(hsvcolor.p * 2, 1.2);// * 0.5;
     // color *= mix(mix(nightColor, dayColor, n), vec3(1.0), rainStrength);
-    return hsv2rgb(hsvcolor);
+    color = hsv2rgb(hsvcolor);
+    float depth = linearizeDepth(texture2D(depthtex0, pos.xy).z);
+#ifdef REDONLY
+    vec3 fogcolor = vec3(1,0,0);
+#else
+    vec3 fogcolor = gl_Fog.color.rgb;
+#endif
+    if (depth > 0.25)
+        color = mix(color, fogcolor, clamp(depth * 2.0 - 0.5, 0.0, 1.0));
+    return color;
 }
 
 void main()
@@ -57,8 +67,10 @@ void main()
     vec4 color = texture2D(colortex0, pos.xy);
     // if (isEyeInWater == 1)
     //     color.rgb = UnderWater(color.rgb);
+#ifdef AFTEREFFECT_N
     color.rgb = effectVisionColor(color.rgb);
     color.rgb = aftereffect(color.rgb);
+#endif
 
     gl_FragColor = color;
 }

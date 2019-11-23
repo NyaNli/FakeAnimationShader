@@ -23,6 +23,9 @@ uniform float viewHeight;
 
 in vec4 pos;
 
+#define LINESTYLE 7 // [0 6 7 8 10]
+#define LUMPLIGHT
+
 // 黑到炸裂的影子（废弃）
 // vec3 darkShadow(vec3 light)
 // {
@@ -34,6 +37,23 @@ in vec4 pos;
 //     if (rgb2hsv(light).p < n)
 //         return vec3(0.0);
 //     return light;
+// }
+
+// vec3 linecolorWater(vec3 color)
+// {
+//     // return vec3(0);
+//     vec3 hsvcolor = rgb2hsv(color);
+//     hsvcolor.p *= 0.7;
+//     return hsv2rgb(hsvcolor);
+//     // return texture2D(colortex4, pos.xy).rgb;
+// }
+
+// vec3 linecolorAll(vec3 color)
+// {
+//     if (texture2D(colortex3, pos.xy).a > 0)
+//         return linecolorWater(color);
+//     else
+//         return linecolor(color);
 // }
 
 // 夜视光照
@@ -53,6 +73,19 @@ vec3 effectVisionLight(vec3 light)
 vec3 mixWater(vec3 color, vec4 watercolor)
 {
     return mix(color, watercolor.rgb, pow(watercolor.a, 0.7));
+}
+
+vec3 linecolor(vec3 color)
+{
+    // return vec3(0);
+    vec3 hsvcolor = rgb2hsv(color);
+    // if (hsvcolor.p > 0.1)
+    //     hsvcolor.p *= 1.2;
+    // else
+    //     hsvcolor.p = 0;
+    // hsvcolor.t += 0.1;
+    hsvcolor.p *= 0.1 * LINESTYLE;
+    return hsv2rgb(hsvcolor);
 }
 
 // 按深度描边（遍历）
@@ -80,7 +113,7 @@ vec3 edgelineZTestFor(vec3 color)
     if (maxz < 0.05)
         return color;
     else
-        return vec3(0);
+        return linecolor(color);
 }
 
 // 按深度描边（遍历）
@@ -109,7 +142,7 @@ vec3 edgelineZTestForWater(vec3 color)
     if (maxz < 0.05)
         return color;
     else
-        return vec3(0);
+        return linecolor(color);
 }
 
 // 按深度描边
@@ -129,7 +162,7 @@ vec3 edgelineZTest(vec3 color)
     // if (maxdepth > min(pow(depth0, 1.4), 0.039))
     // if (maxdepth > 0.001)
     if (maxdepth > 0.05)
-        return vec3(0);
+        return linecolor(color);
     else
         return color;
         // return vec3(1);
@@ -151,7 +184,7 @@ vec3 edgelineZTestWater(vec3 color)
     float maxdepth = max(max(abs(depth0-depth1)/depth0, abs(depth0-depth2)/depth0), max(abs(depth0-depth3)/depth0, abs(depth0-depth4)/depth0));
     // if (maxdepth > min(pow(depth0, 1.4), 0.039))
     if (maxdepth > 0.05)
-        return vec3(0);
+        return linecolor(color);
     else
         return color;
         // return vec3(1);
@@ -173,7 +206,7 @@ vec3 edgelineNormalTest(vec3 color)
     float minnormal = min(min(abs(dot(normal0,normal1)), abs(dot(normal0,normal2))), min(abs(dot(normal0,normal3)), abs(dot(normal0,normal4))));
     // return vec3(minnormal);
     if (minnormal < 0.90)
-        return vec3(0);
+        return linecolor(color);
     else
         return color;
 }
@@ -192,7 +225,7 @@ vec3 edgelineLight(vec3 color)
     float b3 = rgb2hsv(texture2D(colortex2, vec2(clamp(pos.x + dx * size, 0.0, 1.0), clamp(pos.y - dy * size, 0.0, 1.0))).rgb).p;
     float b4 = rgb2hsv(texture2D(colortex2, vec2(clamp(pos.x + dx * size, 0.0, 1.0), clamp(pos.y + dy * size, 0.0, 1.0))).rgb).p;
     if (abs(b0 - b1) > 0.01 || abs(b0 - b2) > 0.01 || abs(b0 - b3) > 0.01 || abs(b0 - b4) > 0.01)
-        return mix(vec3(0.0), color, nightVision);
+        return mix(linecolor(color), color, nightVision);
     else
         return color;
 }
@@ -211,7 +244,7 @@ vec3 edgelineLightWater(vec3 color)
     float b3 = rgb2hsv(texture2D(colortex4, vec2(clamp(pos.x + dx * size, 0.0, 1.0), clamp(pos.y - dy * size, 0.0, 1.0))).rgb).p;
     float b4 = rgb2hsv(texture2D(colortex4, vec2(clamp(pos.x + dx * size, 0.0, 1.0), clamp(pos.y + dy * size, 0.0, 1.0))).rgb).p;
     if (abs(b0 - b1) > 0.01 || abs(b0 - b2) > 0.01 || abs(b0 - b3) > 0.01 || abs(b0 - b4) > 0.01)
-        return mix(vec3(0.0), color, nightVision);
+        return mix(linecolor(color), color, nightVision);
     else
         return color;
 }
@@ -219,24 +252,36 @@ vec3 edgelineLightWater(vec3 color)
 void main()
 {
     vec4 lightcolor = texture2D(colortex2, pos.xy);
+#ifdef LUMPLIGHT
     lightcolor.rgb = effectVisionLight(lightcolor.rgb);
+#endif
     // lightcolor.rgb = darkShadow(lightcolor.rgb);
 
     vec4 color = texture2D(colortex0, pos.xy) * lightcolor;
     // color.rgb = effectVisionColor(color.rgb);
-    color.rgb = edgelineZTest(color.rgb);
-    color.rgb = edgelineLight(color.rgb);
+    if (LINESTYLE < 9)
+    {
+        color.rgb = edgelineZTest(color.rgb);
+        color.rgb = edgelineLight(color.rgb);
+    }
 
     vec4 waterlight = texture2D(colortex4, pos.xy);
+#ifdef LUMPLIGHT
     waterlight.rgb = effectVisionLight(waterlight.rgb);
+#endif
 
     vec4 watercolor = texture2D(colortex3, pos.xy) * waterlight;
-    watercolor.rgb = edgelineZTestWater(watercolor.rgb);
-    watercolor.rgb = edgelineLightWater(watercolor.rgb);
-
+    if (LINESTYLE < 9)
+    {
+        watercolor.rgb = edgelineZTestWater(watercolor.rgb);
+        watercolor.rgb = edgelineLightWater(watercolor.rgb);
+    }
 
     color.rgb = mixWater(color.rgb, watercolor);
-    color.rgb = edgelineNormalTest(color.rgb);
+    if (LINESTYLE < 9)
+    {
+        color.rgb = edgelineNormalTest(color.rgb);
+    }
 
     // gl_FragData[0] = vec4(vec3(linearizeDepth(texture2D(depthtex1, pos.xy).z)), 1.0);
     // gl_FragData[0] = texture2D(colortex2, pos.xy);
