@@ -92,7 +92,8 @@ vec3 sunlightSolid(vec3 light)
     if (rgb2hsv(sunlight).p > rgb2hsv(light).p)
         return sunlight;
     else
-        return light;
+        return mix(sunlight, light, clamp(3.0*(rgb2hsv(light).p - rgb2hsv(sunlight).p), 0.0, 1.0));
+        // return light;
 #else
     // return mix(sunlight, light, clamp(3.0*(rgb2hsv(light).p - rgb2hsv(sunlight).p), 0.0, 1.0));
     return sunlight + light;
@@ -134,7 +135,8 @@ vec3 sunlightWater(vec3 light)
     if (rgb2hsv(sunlight).p > rgb2hsv(light).p)
         return sunlight;
     else
-        return light;
+        return mix(sunlight, light, clamp(3.0*(rgb2hsv(light).p - rgb2hsv(sunlight).p), 0.0, 1.0));
+        // return light;
 #else
     // return mix(sunlight, light, clamp(3.0*(rgb2hsv(light).p - rgb2hsv(sunlight).p), 0.0, 1.0));
     return sunlight + light;
