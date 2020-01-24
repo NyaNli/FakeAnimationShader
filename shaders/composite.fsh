@@ -25,7 +25,7 @@ uniform sampler2D colortex3; // 半透明方块
 uniform sampler2D colortex4; // 半透明方块光照
 uniform sampler2D colortex5; // 法线（不带透明）
 uniform sampler2D colortex6; // 手臂坐标
-uniform sampler2D colortex7; // 杂项
+// uniform sampler2D colortex7; // 杂项
 
 uniform sampler2D depthtex0; // 带透明
 uniform sampler2D depthtex1; // 不带透明
@@ -43,7 +43,7 @@ uniform int IsEyeInWater;
 #define LUMPLIGHT
 #define REALTIMESHADOW
 
-#define SHADOWMAPSIZE 4096 // [512 1024 2048 4096 8192 16384]
+#define SHADOWMAPSIZE 4096 // [2048 4096 8192 16384]
 
 vec3 suncolor = vec3(1.0);
 vec3 mooncolor = vec3(0.2, 0.2, 0.35);
@@ -69,7 +69,7 @@ vec3 sunlightSolid(vec3 light)
     float depth = texture2D(depthtex1, pos.xy).z;
     float linerDepth = linearizeDepth(depth);
     vec4 handPos = texture2D(colortex6, pos.xy);
-    float isEntity = texture2D(colortex7, pos.xy).r;
+    // float isEntity = texture2D(colortex7, pos.xy).r;
     vec3 normal = texture2D(colortex5, pos.xy).xyz;
     float maxlight = clamp(dot(normalize(shadowLightPosition),normal) * 2.0, 0.0, 1.0);
     vec4 viewPosition = gbufferProjectionInverse * vec4(pos.s * 2.0 - 1.0, pos.t * 2.0 - 1.0, 2.0 * depth - 1.0, 1.0f);
@@ -77,7 +77,7 @@ vec3 sunlightSolid(vec3 light)
     vec4 camPosition = gbufferModelViewInverse * viewPosition;
     if (length(handPos.xyz) > 0)
         camPosition = handPos;
-    if (isEntity < 1.0)
+    // if (isEntity < 1.0)
         camPosition += vec4((pow(linerDepth, 1.4) + 0.01) * normalize((gbufferModelViewInverse * vec4(normal, 1.0)).xyz), 0.0);
     vec4 shadowPosition = shadowProjection * shadowModelView * camPosition;
     float dist = length(shadowPosition.xy);
@@ -86,16 +86,16 @@ vec3 sunlightSolid(vec3 light)
     shadowPosition /= shadowPosition.w;
     shadowPosition = shadowPosition * 0.5 + 0.5;
     float shadowDepth = texture2D(shadowtex1, shadowUV(shadowPosition.xy)).z;
-    if (isEntity > 0.0)
-        shadowDepth += 0.0002;
+    // if (isEntity > 0.0)
+    //     shadowDepth += 0.0002;
     vec3 sunlight = vec3(0.0);
     vec3 suncolor = mix(mooncolor, suncolor, n) * n2;
     if (shadowDepth >= shadowPosition.z)
     {
         sunlight = suncolor;
         float waterDepth = texture2D(shadowtex0, shadowUV(shadowPosition.xy)).z;
-        if (isEntity > 0.0)
-            waterDepth += 0.0002;
+        // if (isEntity > 0.0)
+        //     waterDepth += 0.0002;
         if (waterDepth < shadowPosition.z)
         {
             vec4 shadowcolor = texture2D(shadowcolor0, shadowUV(shadowPosition.xy));
@@ -131,7 +131,7 @@ vec3 sunlightWater(vec3 light)
     float depth = texture2D(depthtex0, pos.xy).z;
     float linerDepth = linearizeDepth(depth);
     vec4 handPos = texture2D(colortex6, pos.xy);
-    float isEntity = texture2D(colortex7, pos.xy).r;
+    // float isEntity = texture2D(colortex7, pos.xy).r;
     vec3 normal = texture2D(colortex1, pos.xy).xyz;
     float maxlight = clamp(dot(normalize(shadowLightPosition),normal) * 2.0, 0.0, 1.0);
     vec4 viewPosition = gbufferProjectionInverse * vec4(pos.s * 2.0 - 1.0, pos.t * 2.0 - 1.0, 2.0 * depth - 1.0, 1.0f);
@@ -139,7 +139,7 @@ vec3 sunlightWater(vec3 light)
     vec4 camPosition = gbufferModelViewInverse * viewPosition;
     if (length(handPos.xyz) > 0)
         camPosition = handPos;
-    if (isEntity < 1.0)
+    // if (isEntity < 1.0)
         camPosition += vec4((pow(linerDepth, 1.4) + 0.01) * normalize((gbufferModelViewInverse * vec4(normal, 1.0)).xyz), 0.0);
     vec4 shadowPosition = shadowProjection * shadowModelView * camPosition;
     float dist = length(shadowPosition.xy);
@@ -148,8 +148,8 @@ vec3 sunlightWater(vec3 light)
     shadowPosition /= shadowPosition.w;
     shadowPosition = shadowPosition * 0.5 + 0.5;
     float shadowDepth = texture2D(shadowtex0, shadowUV(shadowPosition.xy)).z;
-    if (isEntity > 0.0)
-        shadowDepth += 0.0002;
+    // if (isEntity > 0.0)
+    //     shadowDepth += 0.0002;
     vec3 sunlight = vec3(0.0);
     if (shadowDepth > shadowPosition.z)
     {
