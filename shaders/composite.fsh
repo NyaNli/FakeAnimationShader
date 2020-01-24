@@ -43,10 +43,24 @@ uniform int IsEyeInWater;
 #define LUMPLIGHT
 #define REALTIMESHADOW
 
+#define SHADOWMAPSIZE 4096 // [512 1024 2048 4096 8192 16384]
+
 vec3 suncolor = vec3(1.0);
 vec3 mooncolor = vec3(0.2, 0.2, 0.35);
 
 in vec4 pos;
+
+// 像素对齐，禁止渐变
+vec2 shadowUV(vec2 texpos)
+{
+    float size = 1.0 / SHADOWMAPSIZE;
+    vec2 p = texpos;
+    p /= size;
+    p = floor(p);
+    p *= size;
+    p += size * 0.5;
+    return p;
+}
 
 vec3 sunlightSolid(vec3 light)
 {
@@ -71,7 +85,7 @@ vec3 sunlightSolid(vec3 light)
     shadowPosition.xy /= distortFactor;
     shadowPosition /= shadowPosition.w;
     shadowPosition = shadowPosition * 0.5 + 0.5;
-    float shadowDepth = texture2D(shadowtex1, shadowPosition.xy).z;
+    float shadowDepth = texture2D(shadowtex1, shadowUV(shadowPosition.xy)).z;
     if (isEntity > 0.0)
         shadowDepth += 0.0002;
     vec3 sunlight = vec3(0.0);
@@ -79,19 +93,24 @@ vec3 sunlightSolid(vec3 light)
     if (shadowDepth >= shadowPosition.z)
     {
         sunlight = suncolor;
-        float waterDepth = texture2D(shadowtex0, shadowPosition.xy).z;
+        float waterDepth = texture2D(shadowtex0, shadowUV(shadowPosition.xy)).z;
         if (isEntity > 0.0)
             waterDepth += 0.0002;
         if (waterDepth < shadowPosition.z)
         {
-            vec4 shadowcolor = texture2D(shadowcolor0, shadowPosition.xy);
-            sunlight = mix(sunlight, shadowcolor.rgb * sunlight, shadowcolor.a);// * (shadowPosition.z - waterDepth) * 30.0);
-            sunlight = mix(sunlight, light, (shadowPosition.z - waterDepth) * (12.0 - sunHeight() * 6.0));
+            vec4 shadowcolor = texture2D(shadowcolor0, shadowUV(shadowPosition.xy));
+            // sunlight = shadowcolor.rgb;
+            if (shadowcolor.a < 1.0) // 过滤非透明
+            {
+                sunlight = mix(sunlight, shadowcolor.rgb * sunlight, shadowcolor.a);// * (shadowPosition.z - waterDepth) * 30.0);
+                sunlight = mix(sunlight, light, (shadowPosition.z - waterDepth) * (12.0 - sunHeight() * 6.0));
+            } else
+                sunlight = vec3(0.0);
         }
     }
     sunlight = mix(light, sunlight, maxlight);
     sunlight = mix(sunlight, light, rainStrength);
-    sunlight = mix(sunlight, suncolor, clamp(0.025 * (length(camPosition.xyz) - 120.0), 0.0, 1.0));
+    sunlight = mix(sunlight, mix(light, suncolor, maxlight), clamp(0.025 * (length(camPosition.xyz) - 120.0), 0.0, 1.0));
 #ifdef LUMPLIGHT
     if (rgb2hsv(sunlight).p > rgb2hsv(light).p)
         return sunlight;
@@ -128,7 +147,7 @@ vec3 sunlightWater(vec3 light)
     shadowPosition.xy /= distortFactor;
     shadowPosition /= shadowPosition.w;
     shadowPosition = shadowPosition * 0.5 + 0.5;
-    float shadowDepth = texture2D(shadowtex0, shadowPosition.xy).z;
+    float shadowDepth = texture2D(shadowtex0, shadowUV(shadowPosition.xy)).z;
     if (isEntity > 0.0)
         shadowDepth += 0.0002;
     vec3 sunlight = vec3(0.0);
@@ -138,7 +157,7 @@ vec3 sunlightWater(vec3 light)
     }
     sunlight = mix(light, sunlight, maxlight);
     sunlight = mix(sunlight, light, rainStrength);
-    sunlight = mix(sunlight, suncolor, clamp(0.025 * (length(camPosition.xyz) - 120.0), 0.0, 1.0));
+    sunlight = mix(sunlight, mix(light, suncolor, maxlight), clamp(0.025 * (length(camPosition.xyz) - 120.0), 0.0, 1.0));
 #ifdef LUMPLIGHT
     if (rgb2hsv(sunlight).p > rgb2hsv(light).p)
         return sunlight;

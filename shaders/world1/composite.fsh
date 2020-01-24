@@ -34,7 +34,7 @@ vec3 darkShadow(vec3 light)
 // 夜视光照
 vec3 effectVisionLight(vec3 light)
 {
-    float n = max(nightVision * 2.0 - 1.0, 0.0);
+    float n = clamp(nightVision * 2.0 - 1.0, 0.0, 1.0);
     return mix(light, vec3(1.0), n);
     // vec3 hsvlight = rgb2hsv(light);
     // hsvlight.p += (1.0 - hsvlight.p) * n;
