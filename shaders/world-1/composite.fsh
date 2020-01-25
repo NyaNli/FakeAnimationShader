@@ -21,7 +21,7 @@ in vec4 pos;
 
 #define LINESTYLE_N 7 // [0 6 7 8 10]
 #define LUMPLIGHT_N
-#define REDONLY
+#define REDONLY 0 // [0 2 4 6 8 10]
 
 // 黑到炸裂的影子
 vec3 darkShadow(vec3 light)
@@ -35,11 +35,7 @@ vec3 darkShadow(vec3 light)
 vec3 effectVisionLight(vec3 light)
 {
     float n = clamp(nightVision * 2.0 - 1.0, 0.0, 1.0);
-#ifdef REDONLY
-    return mix(light, vec3(1.0, 0.0, 0.0), n);
-#else
-    return mix(light, vec3(1.0), n);
-#endif
+    return mix(light, vec3(1.0, REDONLY * 0.1, REDONLY * 0.1), n);
     // vec3 hsvlight = rgb2hsv(light);
     // hsvlight.p += (1.0 - hsvlight.p) * n;
     // return hsv2rgb(hsvlight);

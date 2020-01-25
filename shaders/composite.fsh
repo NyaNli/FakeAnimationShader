@@ -120,7 +120,7 @@ vec3 sunlightSolid(vec3 light)
         return light;
 #else
     // return mix(sunlight, light, clamp(3.0*(rgb2hsv(light).p - rgb2hsv(sunlight).p), 0.0, 1.0));
-    return sunlight + light;
+    return mix(sunlight, light, rgb2hsv(light).p);
 #endif
 }
 

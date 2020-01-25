@@ -21,7 +21,7 @@ in vec4 pos;
 
 #define POSTEFFECT_N
 #define LUMPLIGHT_N
-#define REDONLY
+#define REDONLY 0 // [0 2 4 6 8 10]
 
 vec3 UnderWater(vec3 color)
 {
@@ -70,11 +70,7 @@ vec3 aftereffect(vec3 color)
     // color *= mix(mix(nightColor, dayColor, n), vec3(1.0), rainStrength);
     color = hsv2rgb(hsvcolor);
     float depth = linearizeDepth(texture2D(depthtex1, pos.xy).z);
-#ifdef REDONLY
-    vec3 fogcolor = vec3(1,0,0);
-#else
-    vec3 fogcolor = gl_Fog.color.rgb;
-#endif
+    vec3 fogcolor = mix(vec3(1,0,0), gl_Fog.color.rgb, REDONLY * 0.1);
     if (depth > 0.25 && blindness < 0.00001)
         color = mix(color, fogcolor, clamp(depth * 2.0 - 0.5, 0.0, 1.0));
     return color;

@@ -18,7 +18,7 @@ in vec4 lmpos;
 in vec4 normal;
 
 #define LUMPLIGHT_N
-#define REDONLY
+#define REDONLY 0 // [0 2 4 6 8 10]
 
 void main()
 {
@@ -37,11 +37,7 @@ void main()
         light = 0;
 #endif
 
-#ifdef REDONLY
-    vec3 maincolor = vec3(1.0, 0.0, 0.0);
-#else
-    vec3 maincolor = vec3(1.0, 1.0, 1.0);
-#endif
+    vec3 maincolor = vec3(1.0, REDONLY * 0.1, REDONLY * 0.1);
 
     vec4 lightcolor = vec4(texture2D(lightmap, n2lm(vec2(light, 0))).rgb * maincolor, 1.0);
 

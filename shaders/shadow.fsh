@@ -48,7 +48,7 @@ const float sunPathRotation = 60.0f;
 #endif
 
 
-const float shadowIntervalSize = 0.001f;
+// const float shadowIntervalSize = 0.001f;
 
 #define SHADOW_MAP_BIAS 0.9
 
